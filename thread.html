@@ -1,1 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4OOM — тред</title>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/themes.css">
+<link rel="stylesheet" href="assets/css/geocities.css">
+</head>
+<body class="tile-stars">
 
+<header class="header window">
+  <div class="window__bar">
+    <span>▣ 4OOM.exe</span>
+    <div class="window__buttons">
+      <button class="win-btn" data-theme-toggle title="Сменить тему">◐</button>
+      <button class="win-btn" title="Настройки" onclick="location.href='settings.html'">⚙</button>
+    </div>
+  </div>
+  <div class="header__body">
+    <div class="header__gifs header__gifs--left">
+      <img src="assets/img/gifs/star.gif" alt="★" class="gif">
+      <img src="assets/img/gifs/heart.gif" alt="♥" class="gif">
+    </div>
+    <div class="header__center">
+      <h1 class="logo">4OOM</h1>
+      <p class="tagline">the room that never closed</p>
+    </div>
+    <div class="header__gifs header__gifs--right">
+      <img src="assets/img/gifs/email.gif" alt="✉" class="gif">
+      <img src="assets/img/gifs/rose.gif" alt="🌹" class="gif">
+    </div>
+  </div>
+  <nav class="nav">
+    <a href="index.html" class="nav__link">← назад к тредам</a>
+  </nav>
+</header>
+
+<main class="layout layout--single">
+  <section class="window">
+    <div class="window__bar"><span>📄 Загрузка...</span></div>
+
+    <div id="postList"></div>
+
+    <div class="window__bar"><span>✍ ответить</span></div>
+    <form class="reply-form" id="replyForm">
+      <textarea class="reply-form__textarea" name="body" placeholder="напиши что-нибудь..." rows="4"></textarea>
+      <div class="reply-form__actions">
+        <button type="button" class="neon-btn neon-btn--small" data-gif-picker>+ гифка</button>
+        <button type="submit" class="neon-btn neon-btn--small">отправить</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<!-- ===== ПАНЕЛЬ ВЫБОРА ГИФОК ===== -->
+<div class="gif-picker" id="gifPicker" hidden>
+  <div class="window gif-picker__window">
+    <div class="window__bar">
+      <span>🖼 выбор гифки</span>
+      <button class="win-btn" data-gif-close>×</button>
+    </div>
+    <div class="gif-picker__grid">
+      <img src="assets/img/gifs/star.gif" alt="star" class="gif-picker__item">
+      <img src="assets/img/gifs/heart.gif" alt="heart" class="gif-picker__item">
+      <img src="assets/img/gifs/dino.gif" alt="dino" class="gif-picker__item">
+      <img src="assets/img/gifs/email.gif" alt="email" class="gif-picker__item">
+      <img src="assets/img/gifs/rose.gif" alt="rose" class="gif-picker__item">
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer__gifs">
+    <img src="assets/img/gifs/star.gif" alt="★" class="gif">
+    <img src="assets/img/gifs/heart.gif" alt="♥" class="gif">
+    <img src="assets/img/gifs/dino.gif" alt="🦕" class="gif">
+  </div>
+  <p>4OOM © 2024</p>
+</footer>
+
+<script src="assets/js/theme.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/main.js"></script>
+<script>
+(async function () {
+  const params = new URLSearchParams(location.search);
+  const threadId = params.get('id');
+  if (!threadId) { location.href = 'index.html'; return; }
+
+  try {
+    const data = await apiGet('/api/posts?thread=' + threadId);
+    document.querySelector('.window__bar span').textContent = `📄 #${threadId} — ${data.thread.title}`;
+    
+    document.getElementById('postList').innerHTML = data.posts.map(p => `
+      <article class="post">
+        <div class="post__head">
+          <span class="post__author">${escapeHtml(p.author_name)}</span>
+          <span class="post__time">${new Date(p.created_at * 1000).toLocaleString()}</span>
+        </div>
+        <div class="post__body">${escapeHtml(p.body)}</div>
+      </article>
+    `).join('');
+  } catch (e) {
+    document.getElementById('postList').innerHTML = '<p style="padding: 12px;">Ошибка загрузки треда.</p>';
+  }
+
+  document.getElementById('replyForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = e.target.body.value.trim();
+    if (!body) return;
+    await apiPost('/api/posts', { thread_id: threadId, body, author_name: 'guest' });
+    location.reload();
+  });
+})();
+</script>
+</body>
+</html>
