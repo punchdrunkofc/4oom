@@ -2,7 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Если запрос идёт на /api/* — обрабатываем его нашим кодом
+    // Обрабатываем API
     if (url.pathname.startsWith('/api/')) {
       const cors = {
         'Access-Control-Allow-Origin': '*',
@@ -15,7 +15,6 @@ export default {
       try {
         if (!env.DB) return new Response(JSON.stringify({ error: 'Нет базы' }), { status: 500, headers: cors });
 
-        // GET /api/threads
         if (url.pathname === '/api/threads' && request.method === 'GET') {
           const { results } = await env.DB.prepare(`
             SELECT t.*, (SELECT COUNT(*) FROM posts p WHERE p.thread_id = t.id) AS reply_count
@@ -24,7 +23,6 @@ export default {
           return new Response(JSON.stringify(results), { headers: { ...cors, 'Content-Type': 'application/json' } });
         }
 
-        // POST /api/threads
         if (url.pathname === '/api/threads' && request.method === 'POST') {
           const body = await request.json();
           const author = body.author_name || 'guest';
@@ -47,7 +45,14 @@ export default {
       }
     }
 
-    // Для всех остальных запросов (главная, css, картинки) — отдаём статику
+    // 🔥 ЯДЕРНЫЙ ФИКС: Если запрос на главную, отдаем index.html напрямую
+    if (url.pathname === '/') {
+      // Запрашиваем index.html из статики через ASSETS
+      const assetUrl = new URL('/index.html', url.origin);
+      return env.ASSETS.fetch(assetUrl);
+    }
+
+    // Для всех остальных файлов (css, картинки) отдаем статику
     return env.ASSETS.fetch(request);
   },
 };
