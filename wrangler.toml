@@ -1,5 +1,5 @@
 name = "4oom-api"
-main = "worker/index.js"
+main = "index.js"
 compatibility_date = "2024-11-01"
 
 [[d1_databases]]
