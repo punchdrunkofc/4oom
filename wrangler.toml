@@ -1,8 +1,9 @@
-name = "4oom-api"
-main = "index.js"
-compatibility_date = "2024-11-01"
+name = "4oom"
+compatibility_date = "2026-11-04"
 
-[[d1_databases]]
-binding = "DB"
-database_name = "4oom-db"
-database_id = "2dbdb197-286d-4e55-a679-14224d5cd58a"
+[assets]
+directory = "."
+binding = "ASSETS"
+
+[observability]
+enabled = true
