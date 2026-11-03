@@ -12,6 +12,11 @@ export default {
     }
 
     try {
+      // Если env.DB не определился — вернем понятную ошибку
+      if (!env.DB) {
+        return json({ error: 'База данных не привязана! Проверь вкладку Bindings.' }, cors, 500);
+      }
+
       // GET /api/threads?section=general
       if (url.pathname === '/api/threads' && request.method === 'GET') {
         const section = url.searchParams.get('section');
