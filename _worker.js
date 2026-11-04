@@ -139,12 +139,13 @@ export default {
             const body = document.getElementById('newBody').value;
             if (!title || !body) return alert('Заполни все поля');
             try {
-              await fetch('/api/threads', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title, body, section_slug: 'general' }) });
+              const res = await fetch('/api/threads', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title, body, section_slug: 'general' }) });
+              if (!res.ok) throw new Error('Ошибка сервера');
               document.getElementById('createForm').style.display = 'none';
               document.getElementById('newTitle').value = '';
               document.getElementById('newBody').value = '';
               loadThreads();
-            } catch(e) { alert('Ошибка при создании треда'); }
+            } catch(e) { alert('Ошибка при создании треда: ' + e.message); }
           }
           loadThreads();
         </script>
