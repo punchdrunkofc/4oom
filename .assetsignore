@@ -1,1 +1,4 @@
 _worker.js
+.git/*
+schema.sql
+wrangler.toml
