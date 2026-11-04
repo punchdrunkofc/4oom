@@ -129,7 +129,9 @@ export default {
               const r = await fetch('/api/threads');
               const threads = await r.json();
               if (!threads || threads.length === 0) { list.innerHTML = '<li class="thread"><a href="#"><span class="thread__title">Пока пусто — создай первый тред!</span></a></li>'; return; }
-              list.innerHTML = threads.map(t => \`<li class="thread"><a href="/thread?id=\${t.id}"><span class="thread__id">#\${String(t.id).padStart(3, '0')}</span><span class="thread__title">\${escapeHtml(t.title)}</span><span class="thread__meta">\${t.reply_count} ответов</span></a></li>\`).join('');
+              list.innerHTML = threads.map(function(t) {
+                return '<li class="thread"><a href="/thread?id=' + t.id + '"><span class="thread__id">#' + String(t.id).padStart(3, '0') + '</span><span class="thread__title">' + escapeHtml(t.title) + '</span><span class="thread__meta">' + t.reply_count + ' ответов</span></a></li>';
+              }).join('');
             } catch(e) { list.innerHTML = '<li>Ошибка загрузки</li>'; }
           }
           async function submitThread() {
@@ -176,12 +178,9 @@ export default {
               const r = await fetch('/api/posts?thread=' + threadId);
               const data = await r.json();
               document.querySelector('.window__bar span').textContent = '📄 #' + threadId + ' — ' + data.thread.title;
-              document.getElementById('postList').innerHTML = data.posts.map(p => \`
-                <article class="post">
-                  <div class="post__head"><span class="post__author">\${escapeHtml(p.author_name)}</span><span class="post__time">\${new Date(p.created_at * 1000).toLocaleString()}</span></div>
-                  <div class="post__body">\${escapeHtml(p.body)}</div>
-                </article>
-              \`).join('');
+              document.getElementById('postList').innerHTML = data.posts.map(function(p) {
+                return '<article class="post"><div class="post__head"><span class="post__author">' + escapeHtml(p.author_name) + '</span><span class="post__time">' + new Date(p.created_at * 1000).toLocaleString() + '</span></div><div class="post__body">' + escapeHtml(p.body) + '</div></article>';
+              }).join('');
             } catch(e) { document.getElementById('postList').innerHTML = 'Ошибка загрузки треда'; }
           }
           document.getElementById('replyForm').addEventListener('submit', async e => {
