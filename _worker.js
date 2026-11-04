@@ -140,7 +140,10 @@ export default {
             if (!title || !body) return alert('Заполни все поля');
             try {
               const res = await fetch('/api/threads', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title, body, section_slug: 'general' }) });
-              if (!res.ok) throw new Error('Ошибка сервера');
+              if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Ошибка сервера');
+              }
               document.getElementById('createForm').style.display = 'none';
               document.getElementById('newTitle').value = '';
               document.getElementById('newBody').value = '';
