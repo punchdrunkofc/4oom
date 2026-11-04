@@ -95,7 +95,7 @@ export default {
     if (url.pathname === '/' || url.pathname === '/index.html') {
       return new Response(`<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>4OOM</title><style>${commonCSS}</style></head><body>
         <header class="header window">
-          <div class="window__bar"><span>▣ 4OOM.exe</span><div class="window__buttons"><button class="win-btn">◐</button><button class="win-btn">⚙</button></div></div>
+          <div class="window__bar"><span>▣ 4OOM.exe</span><div class="window__buttons"><button class="win-btn" onclick="alert('Смена темы будет позже!')">◐</button><button class="win-btn" onclick="alert('Настройки в разработке')">⚙</button></div></div>
           <div class="header__body"><div class="header__center" style="text-align: center; flex: 1;"><h1 class="logo">4OOM</h1><p class="tagline">the room that never closed</p><marquee class="marquee" scrollamount="4">★ добро пожаловать в 4OOM ★</marquee></div></div>
           <nav class="nav"><a href="/" class="nav__link" style="font-weight: bold;">главная</a><a href="?section=general" class="nav__link">general</a></nav>
         </header>
