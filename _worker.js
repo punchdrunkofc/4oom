@@ -12,9 +12,8 @@ export default {
       if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
 
       try {
-        if (!env.DB) return new Response(JSON.stringify({ error: 'Нет базы' }), { status: 500, headers: cors });
+        if (!env.DB) return new Response(JSON.stringify({ error: 'Нет базы. Привяжи D1 в настройках!' }), { status: 500, headers: cors });
 
-        // Получить список тредов
         if (url.pathname === '/api/threads' && request.method === 'GET') {
           const { results } = await env.DB.prepare(`
             SELECT t.*, (SELECT COUNT(*) FROM posts p WHERE p.thread_id = t.id) AS reply_count
@@ -23,7 +22,6 @@ export default {
           return new Response(JSON.stringify(results), { headers: { ...cors, 'Content-Type': 'application/json' } });
         }
 
-        // Создать тред
         if (url.pathname === '/api/threads' && request.method === 'POST') {
           const body = await request.json();
           const t = await env.DB.prepare(
@@ -35,7 +33,6 @@ export default {
           return new Response(JSON.stringify({ id: t.id }), { status: 201, headers: { ...cors, 'Content-Type': 'application/json' } });
         }
 
-        // Получить тред и его посты
         if (url.pathname === '/api/posts' && request.method === 'GET') {
           const threadId = url.searchParams.get('thread');
           const thread = await env.DB.prepare(`SELECT * FROM threads WHERE id = ?`).bind(threadId).first();
@@ -43,7 +40,6 @@ export default {
           return new Response(JSON.stringify({ thread, posts: results }), { headers: { ...cors, 'Content-Type': 'application/json' } });
         }
 
-        // Отправить ответ в тред
         if (url.pathname === '/api/posts' && request.method === 'POST') {
           const body = await request.json();
           await env.DB.prepare(`INSERT INTO posts (thread_id, author_name, body) VALUES (?, ?, ?)`).bind(body.thread_id, body.author_name || 'guest', body.body).run();
@@ -107,7 +103,7 @@ export default {
           <section class="window threads">
             <div class="window__bar"><span>📁 threads/</span></div>
             <div class="toolbar">
-              <button class="neon-btn" onclick="openCreateForm()">+ новый тред</button>
+              <button class="neon-btn" onclick="document.getElementById('createForm').style.display='block'">+ НОВЫЙ ТРЕД</button>
               <span class="toolbar__info">сейчас играет: <em>Sunny Day Real Estate — Diary</em></span>
             </div>
             <ul class="thread-list" id="threadList"><li class="thread"><a href="#"><span class="thread__title">Загрузка...</span></a></li></ul>
@@ -136,14 +132,17 @@ export default {
               list.innerHTML = threads.map(t => \`<li class="thread"><a href="/thread?id=\${t.id}"><span class="thread__id">#\${String(t.id).padStart(3, '0')}</span><span class="thread__title">\${escapeHtml(t.title)}</span><span class="thread__meta">\${t.reply_count} ответов</span></a></li>\`).join('');
             } catch(e) { list.innerHTML = '<li>Ошибка загрузки</li>'; }
           }
-          function openCreateForm() { document.getElementById('createForm').style.display = 'block'; }
           async function submitThread() {
             const title = document.getElementById('newTitle').value;
             const body = document.getElementById('newBody').value;
             if (!title || !body) return alert('Заполни все поля');
-            await fetch('/api/threads', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title, body, section_slug: 'general' }) });
-            document.getElementById('createForm').style.display = 'none';
-            loadThreads();
+            try {
+              await fetch('/api/threads', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title, body, section_slug: 'general' }) });
+              document.getElementById('createForm').style.display = 'none';
+              document.getElementById('newTitle').value = '';
+              document.getElementById('newBody').value = '';
+              loadThreads();
+            } catch(e) { alert('Ошибка при создании треда'); }
           }
           loadThreads();
         </script>
@@ -173,23 +172,27 @@ export default {
           const threadId = new URLSearchParams(location.search).get('id');
           async function loadPosts() {
             if (!threadId) { location.href = '/'; return; }
-            const r = await fetch('/api/posts?thread=' + threadId);
-            const data = await r.json();
-            document.querySelector('.window__bar span').textContent = '📄 #' + threadId + ' — ' + data.thread.title;
-            document.getElementById('postList').innerHTML = data.posts.map(p => \`
-              <article class="post">
-                <div class="post__head"><span class="post__author">\${escapeHtml(p.author_name)}</span><span class="post__time">\${new Date(p.created_at * 1000).toLocaleString()}</span></div>
-                <div class="post__body">\${escapeHtml(p.body)}</div>
-              </article>
-            \`).join('');
+            try {
+              const r = await fetch('/api/posts?thread=' + threadId);
+              const data = await r.json();
+              document.querySelector('.window__bar span').textContent = '📄 #' + threadId + ' — ' + data.thread.title;
+              document.getElementById('postList').innerHTML = data.posts.map(p => \`
+                <article class="post">
+                  <div class="post__head"><span class="post__author">\${escapeHtml(p.author_name)}</span><span class="post__time">\${new Date(p.created_at * 1000).toLocaleString()}</span></div>
+                  <div class="post__body">\${escapeHtml(p.body)}</div>
+                </article>
+              \`).join('');
+            } catch(e) { document.getElementById('postList').innerHTML = 'Ошибка загрузки треда'; }
           }
           document.getElementById('replyForm').addEventListener('submit', async e => {
             e.preventDefault();
             const body = document.getElementById('replyBody').value;
             if (!body) return;
-            await fetch('/api/posts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ thread_id: threadId, body }) });
-            document.getElementById('replyBody').value = '';
-            loadPosts();
+            try {
+              await fetch('/api/posts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ thread_id: threadId, body }) });
+              document.getElementById('replyBody').value = '';
+              loadPosts();
+            } catch(e) { alert('Ошибка при отправке'); }
           });
           loadPosts();
         </script>
